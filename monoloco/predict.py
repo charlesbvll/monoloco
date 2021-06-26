@@ -55,6 +55,7 @@ def download_checkpoints(args):
     torch_dir = get_torch_checkpoints_dir()
     if args.checkpoint is None:
         pifpaf_model = os.path.join(torch_dir, 'shufflenetv2k30-201104-224654-cocokp-d75ed641.pkl')
+        print(pifpaf_model)
     else:
         pifpaf_model = args.checkpoint
     dic_models = {'keypoints': pifpaf_model}
@@ -81,6 +82,7 @@ def download_checkpoints(args):
         name = 'monoloco_pp-201203-1424.pkl'
 
     model = os.path.join(torch_dir, name)
+    print(name)
     dic_models[args.mode] = model
     if not os.path.exists(model):
         assert DOWNLOAD is not None, "pip install gdown to download monoloco model, or pass it as --model"
@@ -124,6 +126,11 @@ def factory_from_args(args):
     else:
         args.batch_size = 1
 
+    if args.casr_std:
+        args.casr = 'std'
+    else:
+        args.casr = 'nonstd'
+
     # Patch for stereo images with batch_size = 2
     if args.batch_size == 2 and not args.long_edge:
         args.long_edge = 1238
@@ -155,7 +162,9 @@ def predict(args):
             mode=args.mode,
             device=args.device,
             n_dropout=args.n_dropout,
-            p_dropout=args.dropout)
+            p_dropout=args.dropout,
+            casr=args.casr,
+            casr_model=args.casr_model)
 
     # data
     processor, pifpaf_model = processor_factory(args)
@@ -220,11 +229,15 @@ def predict(args):
                 dic_out = net.forward(keypoints, kk)
                 dic_out = net.post_process(
                     dic_out, boxes, keypoints, kk, dic_gt)
-                if args.activities and 'social_distance' in args.activities:
-                    dic_out = net.social_distance(dic_out, args)
-                if args.activities and 'raise_hand' in args.activities:
-                    dic_out = net.raising_hand(dic_out, keypoints)
-
+                if args.activities:
+                    if 'social_distance' in args.activities:
+                        dic_out = net.social_distance(dic_out, args)
+                    if 'raise_hand' in args.activities:
+                        dic_out = net.raising_hand(dic_out, keypoints)
+                    if 'using_phone' in args.activities:
+                        dic_out = net.using_phone(dic_out, keypoints) 
+                    if 'is_turning' in args.activities:
+                        dic_out = net.turning_forward(dic_out, keypoints)
             else:
                 LOG.info("Prediction with MonStereo")
                 _, keypoints_r = preprocess_pifpaf(pifpaf_outs['right'], im_size)

@@ -11,7 +11,7 @@ import torch.nn as nn
 import numpy as np
 import matplotlib.pyplot as plt
 
-from ..network import extract_labels, extract_labels_aux, extract_outputs
+from ..network import extract_labels, extract_labels_aux, extract_labels_cyclist, extract_outputs
 
 
 class AutoTuneMultiTaskLoss(torch.nn.Module):
@@ -53,8 +53,13 @@ class MultiTaskLoss(torch.nn.Module):
         self.tasks = tasks
         if len(self.tasks) == 1 and self.tasks[0] == 'aux':
             self.flag_aux = True
+            self.flag_cyclist = False
+        elif len(self.tasks) == 1 and self.tasks[0] == 'cyclist':
+            self.flag_cyclist = True
+            self.flag_aux = False
         else:
             self.flag_aux = False
+            self.flag_cyclist = False
 
     def forward(self, outputs, labels, phase='train'):
 
@@ -62,6 +67,8 @@ class MultiTaskLoss(torch.nn.Module):
         out = extract_outputs(outputs, tasks=self.tasks)
         if self.flag_aux:
             gt_out = extract_labels_aux(labels, tasks=self.tasks)
+        elif self.flag_cyclist:
+            gt_out = extract_labels_cyclist(labels, tasks=self.tasks)
         else:
             gt_out = extract_labels(labels, tasks=self.tasks)
         loss_values = [lam * l(o, g) for lam, l, o, g in zip(self.lambdas, self.losses, out, gt_out)]
@@ -81,7 +88,8 @@ class CompositeLoss(torch.nn.Module):
         self.tasks = tasks
         self.multi_loss_tr = {task: (LaplacianLoss() if task == 'd'
                                      else (nn.BCEWithLogitsLoss() if task in ('aux', )
-                                           else nn.L1Loss())) for task in tasks}
+                                           else (nn.CrossEntropyLoss() if task == 'cyclist' 
+                                           else nn.L1Loss()))) for task in tasks}
 
         self.multi_loss_val = {}
         for task in tasks:
@@ -91,6 +99,8 @@ class CompositeLoss(torch.nn.Module):
                 loss = angle_loss
             elif task in ('aux', ):
                 loss = nn.BCEWithLogitsLoss()
+            elif task == 'cyclist':
+                loss = nn.CrossEntropyLoss()
             else:
                 loss = nn.L1Loss()
             self.multi_loss_val[task] = loss

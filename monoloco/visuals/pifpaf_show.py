@@ -132,6 +132,9 @@ class KeypointPainter:
                     if 'raise_hand' in activities:
                         c, linewidth = highlighted_arm(x, y, connection, c, linewidth,
                                                              dic_out['raising_hand'][:][i], size=size)
+                    if 'is_turning' in activities:
+                        c, linewidth = highlighted_arm(x, y, connection, c, linewidth,
+                                                                dic_out['turning'][:][i], size=size)
 
                 if self.color_connections:
                     c = matplotlib.cm.get_cmap('tab20')(ci / len(self.skeleton))

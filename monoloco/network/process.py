@@ -237,7 +237,8 @@ def extract_outputs(outputs, tasks=()):
                'h': outputs[:, 4:5],
                'w': outputs[:, 5:6],
                'l': outputs[:, 6:7],
-               'ori': outputs[:, 7:9]}
+               'ori': outputs[:, 7:9],
+               'cyclist': outputs}
 
     if outputs.shape[1] == 10:
         dic_out['aux'] = outputs[:, 9:10]
@@ -283,6 +284,16 @@ def extract_labels_aux(labels, tasks=None):
     dic_gt_out = {key: el.detach().cpu() for key, el in dic_gt_out.items()}
     return dic_gt_out
 
+def extract_labels_cyclist(labels, tasks=None):
+
+    dic_gt_out = {'cyclist': labels}
+
+    if tasks is not None:
+        assert isinstance(tasks, tuple), "tasks need to be a tuple"
+        return [dic_gt_out[task] for task in tasks]
+
+    dic_gt_out = {key: el.detach().cpu() for key, el in dic_gt_out.items()}
+    return dic_gt_out
 
 def extract_labels(labels, tasks=None):
 

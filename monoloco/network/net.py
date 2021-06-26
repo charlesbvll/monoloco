@@ -16,7 +16,7 @@ from ..utils import get_iou_matches, reorder_matches, get_keypoints, pixel_to_ca
     mask_joint_disparity
 from .process import preprocess_monstereo, preprocess_monoloco, extract_outputs, extract_outputs_mono,\
     filter_outputs, cluster_outputs, unnormalize_bi, laplace_sampling
-from ..activity import social_interactions, is_raising_hand
+from ..activity import social_interactions, is_raising_hand, is_phoning, is_turning
 from .architectures import MonolocoModel, LocoModel
 
 
@@ -27,7 +27,7 @@ class Loco:
     LINEAR_SIZE_MONO = 256
     N_SAMPLES = 100
 
-    def __init__(self, model, mode, net=None, device=None, n_dropout=0, p_dropout=0.2, linear_size=1024):
+    def __init__(self, model, mode, net=None, device=None, n_dropout=0, p_dropout=0.2, linear_size=1024, casr='nonstd', casr_model=None):
 
         # Select networks
         assert mode in ('mono', 'stereo'), "mode not recognized"
@@ -57,6 +57,19 @@ class Loco:
             input_size = 34
             output_size = 2
 
+        if casr == 'std':
+            print("CASR with standard gestures")
+            turning_output_size = 3
+            turning_model_path = "/home/beauvill/Repos/monoloco/data/outputs/casr_standard-210613-0005.pkl"
+        else:
+            turning_output_size = 4 
+            if casr_model:
+                turning_model_path = casr_model
+            else:
+                turning_model_path = "/home/beauvill/Repos/monoloco/data/outputs/casr-210615-1128.pkl"
+        
+        print('-'*10 + 'Output size :' + str(turning_output_size) + '-'*10)
+
         if not device:
             self.device = torch.device('cpu')
         else:
@@ -70,15 +83,22 @@ class Loco:
             if net in ('monoloco', 'monoloco_p'):
                 self.model = MonolocoModel(p_dropout=p_dropout, input_size=input_size, linear_size=linear_size,
                                            output_size=output_size)
+                self.turning_model = MonolocoModel(p_dropout=p_dropout, input_size=34, linear_size=linear_size,
+                                           output_size=turning_output_size)
             else:
                 self.model = LocoModel(p_dropout=p_dropout, input_size=input_size, output_size=output_size,
                                             linear_size=linear_size, device=self.device)
+                self.turning_model = LocoModel(p_dropout=p_dropout, input_size=34, output_size=turning_output_size,
+                                            linear_size=linear_size, device=self.device)
 
             self.model.load_state_dict(torch.load(model_path, map_location=lambda storage, loc: storage))
+            self.turning_model.load_state_dict(torch.load(turning_model_path, map_location=lambda storage, loc: storage))
         else:
             self.model = model
         self.model.eval()  # Default is train
         self.model.to(self.device)
+        self.turning_model.eval()  # Default is train
+        self.turning_model.to(self.device)
 
     def forward(self, keypoints, kk, keypoints_r=None):
         """
@@ -271,6 +291,36 @@ class Loco:
         dic_out['raising_hand'] = [is_raising_hand(keypoint) for keypoint in keypoints]
         return dic_out
 
+    @staticmethod
+    def using_phone(dic_out, keypoints):
+        dic_out['using_phone'] = [is_phoning(keypoint) for keypoint in keypoints]
+        return dic_out    
+
+    @staticmethod
+    def turning(dic_out, keypoints):
+        dic_out['turning'] = [is_turning(keypoint) for keypoint in keypoints]
+        return dic_out
+
+    def turning_forward(self, dic_out, keypoints):
+        """
+        Forward pass of MonSter or monoloco network
+        It includes preprocessing and postprocessing of data
+        """
+        if not keypoints:
+            return None
+
+        with torch.no_grad():
+            keypoints = torch.tensor(keypoints).to(self.device)
+            kk = torch.eye(3).to(self.device)
+
+            inputs = preprocess_monoloco(keypoints, kk, zero_center=False)
+            outputs = self.turning_model(inputs)
+            # bi = unnormalize_bi(outputs)
+            dic = {'turning': [o for o in torch.argmax(outputs, axis=len(outputs.shape)-1).tolist()]}
+            # dic = {key: el.detach().cpu() for key, el in dic.items()}
+            dic_out['turning'] = dic['turning']
+
+        return dic_out
 
 def median_disparity(dic_out, keypoints, keypoints_r, mask):
     """

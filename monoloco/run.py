@@ -50,10 +50,11 @@ def cli():
     visualizer.cli(parser)
 
     # Monoloco
-    predict_parser.add_argument('--activities', nargs='+', choices=['raise_hand', 'social_distance'],
+    predict_parser.add_argument('--activities', nargs='+', choices=['raise_hand', 'social_distance', 'using_phone', 'is_turning'],
                                 help='Choose activities to show: social_distance, raise_hand')
     predict_parser.add_argument('--mode', help='keypoints, mono, stereo', default='mono')
     predict_parser.add_argument('--model', help='path of MonoLoco/MonStereo model to load')
+    predict_parser.add_argument('--casr_model', help='path of casr model to load')
     predict_parser.add_argument('--net', help='only to select older MonoLoco model, otherwise use --mode')
     predict_parser.add_argument('--path_gt', help='path of json file with gt 3d localization')
                                 #default='data/arrays/names-kitti-200615-1022.json')
@@ -61,6 +62,7 @@ def cli():
     predict_parser.add_argument('--n_dropout', type=int, help='Epistemic uncertainty evaluation', default=0)
     predict_parser.add_argument('--dropout', type=float, help='dropout parameter', default=0.2)
     predict_parser.add_argument('--show_all', help='only predict ground-truth matches or all', action='store_true')
+    predict_parser.add_argument('--casr_std', help='run casr training', action='store_true')
     predict_parser.add_argument('--webcam', help='monstereo streaming', action='store_true')
     predict_parser.add_argument('--camera', help='device to use for webcam streaming', type=int, default=0)
     predict_parser.add_argument('--focal', help='focal length in mm for a sensor size of 7.2x5.4 mm. (nuScenes)',
@@ -96,6 +98,8 @@ def cli():
     training_parser.add_argument('--hidden_size', type=int, help='Number of hidden units in the model', default=1024)
     training_parser.add_argument('--n_stage', type=int, help='Number of stages in the model', default=3)
     training_parser.add_argument('--hyp', help='run hyperparameters tuning', action='store_true')
+    training_parser.add_argument('--casr', help='run casr training', action='store_true')
+    training_parser.add_argument('--casr_std', help='run casr training', action='store_true')
     training_parser.add_argument('--multiplier', type=int, help='Size of the grid of hyp search', default=1)
     training_parser.add_argument('--r_seed', type=int, help='specify the seed for training and hyp tuning', default=1)
     training_parser.add_argument('--print_loss', help='print training and validation losses', action='store_true')
@@ -146,6 +150,12 @@ def main():
             from .prep.preprocess_nu import PreprocessNuscenes
             prep = PreprocessNuscenes(args.dir_ann, args.dir_nuscenes, args.dataset, args.iou_min)
             prep.run()
+        elif 'casr' in args.dataset:
+            from .prep.casr_preprocess import create_dic
+            create_dic()
+        elif 'casr_std' in args.dataset:
+            from .prep.casr_preprocess_standard import create_dic_std
+            create_dic_std()
         else:
             from .prep.preprocess_kitti import PreprocessKitti
             prep = PreprocessKitti(args.dir_ann, mode=args.mode, iou_min=args.iou_min)
@@ -157,10 +167,27 @@ def main():
     elif args.command == 'train':
         from .train import HypTuning
         if args.hyp:
-            hyp_tuning = HypTuning(joints=args.joints, epochs=args.epochs,
-                                   monocular=args.monocular, dropout=args.dropout,
-                                   multiplier=args.multiplier, r_seed=args.r_seed)
-            hyp_tuning.train(args)
+            if args.casr:
+                from .train import HypTuningCasr
+                hyp_tuning_casr = HypTuningCasr(joints=args.joints, epochs=args.epochs,
+                                       monocular=args.monocular, dropout=args.dropout,
+                                       multiplier=args.multiplier, r_seed=args.r_seed)
+                hyp_tuning_casr.train(args)
+            else:
+                hyp_tuning = HypTuning(joints=args.joints, epochs=args.epochs,
+                                       monocular=args.monocular, dropout=args.dropout,
+                                       multiplier=args.multiplier, r_seed=args.r_seed)
+                hyp_tuning.train(args)
+        elif args.casr:
+            from .train import CASRTrainer
+            training = CASRTrainer(args)
+            _ = training.train()
+            _ = training.evaluate()
+        elif args.casr_std:
+            from .train import CASRTrainerStandard
+            training = CASRTrainerStandard(args)
+            _ = training.train()
+            _ = training.evaluate()
         else:
             from .train import Trainer
             training = Trainer(args)

@@ -51,7 +51,7 @@ def cli():
 
     # Monoloco
     predict_parser.add_argument('--activities', nargs='+', choices=['raise_hand', 'social_distance', 'using_phone', 'is_turning'],
-                                help='Choose activities to show: social_distance, raise_hand')
+                                help='Choose activities to show: social_distance, raise_hand', default=[])
     predict_parser.add_argument('--mode', help='keypoints, mono, stereo', default='mono')
     predict_parser.add_argument('--model', help='path of MonoLoco/MonStereo model to load')
     predict_parser.add_argument('--casr_model', help='path of casr model to load')

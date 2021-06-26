@@ -248,7 +248,7 @@ def is_raising_hand(kp):
     if is_right_risen:
         return 'right'
 
-    return 'none'
+    return None
 
 
 def check_f_formations(idx, idx_t, centers, angles, radii, social_distance=False):
@@ -307,8 +307,6 @@ def show_activities(args, image_t, output_path, annotations, dic_out):
     colors = ['deepskyblue' for _ in dic_out['uv_heads']]
     if 'social_distance' in args.activities:
         colors = social_distance_colors(colors, dic_out)
-
-    print("Size of the image :", image_t.size)    
 
     angles = dic_out['angles']
     stds = dic_out['stds_ale']

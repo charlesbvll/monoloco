@@ -5,7 +5,22 @@
 
 name: Tests
 
-on: [push, pull_request]
+on:
+  push:
+    paths:
+      - 'monoloco/**'
+      - 'test/**'
+      - 'docs/00*.png'
+      - 'docs/frame0032.jpg'
+      - '.github/workflows/tests.yml'
+
+  pull_request:
+    paths:
+      - 'monoloco/**'
+      - 'test/**'
+      - 'docs/00*.png'
+      - 'docs/frame0032.jpg'
+      - '.github/workflows/tests.yml'
 
 jobs:
   build:

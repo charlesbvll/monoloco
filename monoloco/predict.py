@@ -18,7 +18,6 @@ import torch
 import PIL
 import openpifpaf
 import openpifpaf.datasets as datasets
-from openpifpaf.predict import processor_factory, preprocess_factory
 from openpifpaf import decoder, network, visualizer, show, logger
 try:
     import gdown
@@ -53,14 +52,17 @@ def get_torch_checkpoints_dir():
 
 def download_checkpoints(args):
     torch_dir = get_torch_checkpoints_dir()
+    os.makedirs(torch_dir, exist_ok=True)
     if args.checkpoint is None:
+        os.makedirs(torch_dir, exist_ok=True)
         pifpaf_model = os.path.join(torch_dir, 'shufflenetv2k30-201104-224654-cocokp-d75ed641.pkl')
         print(pifpaf_model)
     else:
         pifpaf_model = args.checkpoint
     dic_models = {'keypoints': pifpaf_model}
     if not os.path.exists(pifpaf_model):
-        assert DOWNLOAD is not None, "pip install gdown to download pifpaf model, or pass it as --checkpoint"
+        assert DOWNLOAD is not None, \
+            "pip install gdown to download a pifpaf model, or pass the model path as --checkpoint"
         LOG.info('Downloading OpenPifPaf model in %s', torch_dir)
         DOWNLOAD(OPENPIFPAF_MODEL, pifpaf_model, quiet=False)
 
@@ -74,7 +76,7 @@ def download_checkpoints(args):
         assert not args.social_distance, "Social distance not supported in stereo modality"
         path = MONSTEREO_MODEL
         name = 'monstereo-201202-1212.pkl'
-    elif (args.activities and 'social_distance' in args.activities) or args.webcam:
+    elif ('social_distance' in args.activities) or args.webcam:
         path = MONOLOCO_MODEL_NU
         name = 'monoloco_pp-201207-1350.pkl'
     else:
@@ -85,7 +87,9 @@ def download_checkpoints(args):
     print(name)
     dic_models[args.mode] = model
     if not os.path.exists(model):
-        assert DOWNLOAD is not None, "pip install gdown to download monoloco model, or pass it as --model"
+        os.makedirs(torch_dir, exist_ok=True)
+        assert DOWNLOAD is not None, \
+            "pip install gdown to download a monoloco model, or pass the model path as --model"
         LOG.info('Downloading model in %s', torch_dir)
         DOWNLOAD(path, model, quiet=False)
     return dic_models
@@ -166,12 +170,11 @@ def predict(args):
             casr=args.casr,
             casr_model=args.casr_model)
 
-    # data
-    processor, pifpaf_model = processor_factory(args)
-    preprocess = preprocess_factory(args)
+    # for openpifpaf predicitons
+    predictor = openpifpaf.Predictor(checkpoint=args.checkpoint)
 
     # data
-    data = datasets.ImageList(args.images, preprocess=preprocess)
+    data = datasets.ImageList(args.images, preprocess=predictor.preprocess)
     if args.mode == 'stereo':
         assert len(
             data.image_paths) % 2 == 0, "Odd number of images in a stereo setting"
@@ -180,22 +183,19 @@ def predict(args):
         data, batch_size=args.batch_size, shuffle=False,
         pin_memory=False, collate_fn=datasets.collate_images_anns_meta)
 
-    for batch_i, (image_tensors_batch, _, meta_batch) in enumerate(data_loader):
-        pred_batch = processor.batch(
-            pifpaf_model, image_tensors_batch, device=args.device)
+    for batch_i, (_, _, meta_batch) in enumerate(data_loader):
 
         # unbatch (only for MonStereo)
-        for idx, (pred, meta) in enumerate(zip(pred_batch, meta_batch)):
+        for idx, (preds, _, meta) in enumerate(predictor.dataset(data)):
             LOG.info('batch %d: %s', batch_i, meta['file_name'])
-            pred = [ann.inverse_transform(meta) for ann in pred]
 
             # Load image and collect pifpaf results
             if idx == 0:
                 with open(meta_batch[0]['file_name'], 'rb') as f:
                     cpu_image = PIL.Image.open(f).convert('RGB')
                 pifpaf_outs = {
-                    'pred': pred,
-                    'left': [ann.json_data() for ann in pred],
+                    'pred': preds,
+                    'left': [ann.json_data() for ann in preds],
                     'image': cpu_image}
 
                 # Set output image name
@@ -212,7 +212,7 @@ def predict(args):
 
             # Only for MonStereo
             else:
-                pifpaf_outs['right'] = [ann.json_data() for ann in pred]
+                pifpaf_outs['right'] = [ann.json_data() for ann in preds]
 
         # 3D Predictions
         if args.mode != 'keypoints':
@@ -229,15 +229,14 @@ def predict(args):
                 dic_out = net.forward(keypoints, kk)
                 dic_out = net.post_process(
                     dic_out, boxes, keypoints, kk, dic_gt)
-                if args.activities:
-                    if 'social_distance' in args.activities:
-                        dic_out = net.social_distance(dic_out, args)
-                    if 'raise_hand' in args.activities:
-                        dic_out = net.raising_hand(dic_out, keypoints)
-                    if 'using_phone' in args.activities:
-                        dic_out = net.using_phone(dic_out, keypoints) 
-                    if 'is_turning' in args.activities:
-                        dic_out = net.turning_forward(dic_out, keypoints)
+                if 'social_distance' in args.activities:
+                    dic_out = net.social_distance(dic_out, args)
+                if 'raise_hand' in args.activities:
+                    dic_out = net.raising_hand(dic_out, keypoints)
+                if 'using_phone' in args.activities:
+                    dic_out = net.using_phone(dic_out, keypoints) 
+                if 'is_turning' in args.activities:
+                    dic_out = net.turning_forward(dic_out, keypoints)
             else:
                 LOG.info("Prediction with MonStereo")
                 _, keypoints_r = preprocess_pifpaf(pifpaf_outs['right'], im_size)
@@ -264,7 +263,7 @@ def factory_outputs(args, pifpaf_outs, dic_out, output_path, kk=None):
     else:
         assert 'json' in args.output_types or args.mode == 'keypoints', \
             "No output saved, please select one among front, bird, multi, json, or pifpaf arguments"
-    if args.activities and 'social_distance' in args.activities:
+    if 'social_distance' in args.activities:
         assert args.mode == 'mono', "Social distancing only works with monocular network"
 
     if args.mode == 'keypoints':

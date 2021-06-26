@@ -11,14 +11,10 @@ import math
 import numpy as np
 from PIL import Image
 
-try:
-    import matplotlib
-    import matplotlib.pyplot as plt
-    from matplotlib.patches import Circle, FancyArrow
-    import scipy.ndimage as ndimage
-except ImportError:
-    ndimage = None
-    plt = None
+import matplotlib
+import matplotlib.pyplot as plt
+from matplotlib.patches import Circle, FancyArrow
+import scipy.ndimage as ndimage
 
 
 COCO_PERSON_SKELETON = [
@@ -49,6 +45,10 @@ def image_canvas(image, fig_file=None, show=True, dpi_factor=1.0, fig_width=10.0
     if 'figsize' not in kwargs:
         kwargs['figsize'] = (fig_width, fig_width * image.size[1] / image.size[0])
 
+    if plt is None:
+        raise Exception('please install matplotlib')
+    if ndimage is None:
+        raise Exception('please install scipy')
     fig = plt.figure(**kwargs)
     ax = plt.Axes(fig, [0.0, 0.0, 1.0, 1.0])
     ax.set_axis_off()
@@ -128,13 +128,12 @@ class KeypointPainter:
                 c = color
                 linewidth = self.linewidth
 
-                if activities:
-                    if 'raise_hand' in activities:
-                        c, linewidth = highlighted_arm(x, y, connection, c, linewidth,
-                                                             dic_out['raising_hand'][:][i], size=size)
-                    if 'is_turning' in activities:
-                        c, linewidth = highlighted_arm(x, y, connection, c, linewidth,
-                                                                dic_out['turning'][:][i], size=size)
+                if 'raise_hand' in activities:
+                    c, linewidth = highlighted_arm(x, y, connection, c, linewidth,
+                                                            dic_out['raising_hand'][:][i], size=size)
+                if 'is_turning' in activities:
+                    c, linewidth = highlighted_arm(x, y, connection, c, linewidth,
+                                                            dic_out['turning'][:][i], size=size)
 
                 if self.color_connections:
                     c = matplotlib.cm.get_cmap('tab20')(ci / len(self.skeleton))

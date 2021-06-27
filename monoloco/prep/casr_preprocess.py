@@ -94,6 +94,7 @@ def create_dic(std=False):
             dic_jo[phase]['names'].append(folder+"_frame{}".format(j))
 
     now_time = datetime.datetime.now().strftime("%Y%m%d-%H%M")[2:]
-    with open("/home/beauvill/joints-casr-" + mode + "-right-" + split[0] + split[1] + "-" + now_time + ".json", 'w') as file:
+    with open("/home/beauvill/joints-casr-" + mode + "-right-" +
+              split[0] + split[1] + "-" + now_time + ".json", 'w') as file:
         json.dump(dic_jo, file)
     return dic_jo

@@ -151,10 +151,10 @@ def main():
             prep.run()
         elif 'casr' in args.dataset:
             from .prep.casr_preprocess import create_dic
-            create_dic()
+            create_dic(std=False)
         elif 'casr_std' in args.dataset:
-            from .prep.casr_preprocess_standard import create_dic_std
-            create_dic_std()
+            from .prep.casr_preprocess import create_dic
+            create_dic(std=True)
         else:
             from .prep.preprocess_kitti import PreprocessKitti
             prep = PreprocessKitti(args.dir_ann, mode=args.mode, iou_min=args.iou_min)

@@ -38,12 +38,12 @@ def match_bboxes(bbox_gt, bbox_pred):
 def standard_bbox(bbox):
     return [bbox[0], bbox[1], bbox[0]+bbox[2], bbox[1]+bbox[3]]
 
-def load_gt(path=gt_path):
-    return pickle.load(open(path, 'rb'), encoding='latin1')
+def load_gt():
+    return pickle.load(open(gt_path, 'rb'), encoding='latin1')
 
-def load_res(path=res_path):
+def load_res():
     mono = []
-    for folder in sorted(glob.glob(path), key=lambda x:float(re.findall(r"(\d+)",x)[0])):
+    for folder in sorted(glob.glob(res_path), key=lambda x:float(re.findall(r"(\d+)",x)[0])):
         data_list = []
         for file in sorted(os.listdir(folder), key=lambda x:float(re.findall(r"(\d+)",x)[0])):
             if 'json' in file:
@@ -54,7 +54,7 @@ def load_res(path=res_path):
         mono.append(data_list)
     return mono
 
-def create_dic():
+def create_dic(std=False):
     gt=load_gt()
     res=load_res()
     dic_jo = {
@@ -63,7 +63,14 @@ def create_dic():
         'version': __version__,
     }
     split = ['3', '4']
-    for i in range(len(res[:])):
+    if std:
+        wrong = [6, 8, 9, 10, 11, 12, 14, 21, 40, 43, 55, 70, 76, 92, 109,
+                 110, 112, 113, 121, 123, 124, 127, 128, 134, 136, 139, 165, 173]
+        mode = 'std'
+    else:
+        wrong = []
+        mode = ''
+    for i in [x for x in range(len(res[:])) if x not in wrong]:
         for j in [x for x in range(len(res[i][:])) if 'boxes' in res[i][x]]:
             folder = gt[i][j]['video_folder']
 
@@ -77,13 +84,16 @@ def create_dic():
 
             keypoints = [res[i][j]['uv_kps'][good_idx]]
 
+            gt_turn = gt[i][j]['left_or_right']
+            if std and gt_turn == 3:
+                gt_turn = 2
             inp = preprocess_monoloco(keypoints, torch.eye(3)).view(-1).tolist()
             dic_jo[phase]['kps'].append(keypoints)
             dic_jo[phase]['X'].append(inp)
-            dic_jo[phase]['Y'].append(gt[i][j]['left_or_right'])
+            dic_jo[phase]['Y'].append(gt_turn)
             dic_jo[phase]['names'].append(folder+"_frame{}".format(j))
 
     now_time = datetime.datetime.now().strftime("%Y%m%d-%H%M")[2:]
-    with open("/home/beauvill/joints-casr-right-" + split[0] + split[1] + "-" + now_time + ".json", 'w') as file:
+    with open("/home/beauvill/joints-casr-" + mode + "-right-" + split[0] + split[1] + "-" + now_time + ".json", 'w') as file:
         json.dump(dic_jo, file)
     return dic_jo

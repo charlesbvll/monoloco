@@ -161,6 +161,7 @@ def predict(args):
 
     # Load Models
     if args.mode in ('mono', 'stereo'):
+        print(args.casr)
         net = Loco(
             model=dic_models[args.mode],
             mode=args.mode,

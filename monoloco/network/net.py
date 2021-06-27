@@ -62,7 +62,7 @@ class Loco:
             print("CASR with standard gestures")
             turning_output_size = 3
             turning_model_path = "/home/beauvill/Repos/monoloco/data/outputs/casr_standard-210613-0005.pkl"
-        elif casr== 'nonstd':
+        elif casr == 'nonstd':
             turning_output_size = 4
             if casr_model:
                 turning_model_path = casr_model
@@ -96,6 +96,7 @@ class Loco:
 
             self.model.load_state_dict(torch.load(model_path, map_location=lambda storage, loc: storage))
             if casr:
+                print("WTF")
                 self.turning_model.load_state_dict(torch.load(turning_model_path,
                                                               map_location=lambda storage, loc: storage))
         else:

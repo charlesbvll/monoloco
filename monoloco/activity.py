@@ -180,7 +180,7 @@ def is_phoning(kp):
     print("Left hand y = ", kp[y][l_hand])
 
     print("Is left hand up : ", is_l_up)
- 
+
     print("Right hand x = ", kp[x][r_hand])
     print("Right hand y = ", kp[y][r_hand])
 

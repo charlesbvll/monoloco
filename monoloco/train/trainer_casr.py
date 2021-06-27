@@ -214,7 +214,7 @@ class CASRTrainer:
                     sys.exit()
 
                 # Forward pass
-                #outputs = self.model(inputs)
+                # outputs = self.model(inputs)
                 #self.compute_stats(outputs, labels, dic_err['val'], size_eval, clst='all')
 
             # self.cout_stats(dic_err['val'], size_eval, clst='all')

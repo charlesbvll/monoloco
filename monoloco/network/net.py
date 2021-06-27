@@ -68,7 +68,7 @@ class Loco:
                 turning_model_path = casr_model
             else:
                 turning_model_path = "/home/beauvill/Repos/monoloco/data/outputs/casr-210615-1128.pkl"
- 
+
         print('-'*10 + 'Output size :' + str(turning_output_size) + '-'*10)
 
         if not device:
@@ -93,7 +93,7 @@ class Loco:
                                             linear_size=linear_size, device=self.device)
 
             self.model.load_state_dict(torch.load(model_path, map_location=lambda storage, loc: storage))
-            self.turning_model.load_state_dict(torch.load(turning_model_path, 
+            self.turning_model.load_state_dict(torch.load(turning_model_path,
                                                           map_location=lambda storage, loc: storage))
         else:
             self.model = model

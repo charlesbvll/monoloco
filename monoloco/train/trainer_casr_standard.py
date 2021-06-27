@@ -292,7 +292,6 @@ class CASRTrainerStandard:
             string = string + phase[0:1].upper() + ':'
             for el in running_loss['train']:
                 loss = running_loss[phase][el] / self.dataset_sizes[phase]
-                print("Loss = ", loss)
                 epoch_losses[phase][el].append(loss)
                 if el == 'all':
                     string = string + ':{:.1f}  '

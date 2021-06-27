@@ -54,7 +54,9 @@ def load_res():
         mono.append(data_list)
     return mono
 
-def create_dic_std(gt=load_gt(), res=load_res()):
+def create_dic_std():
+    gt=load_gt()
+    res=load_res()
     dic_jo = {
         'train': dict(X=[], Y=[], names=[], kps=[]),
         'val': dict(X=[], Y=[], names=[], kps=[]),
@@ -80,7 +82,7 @@ def create_dic_std(gt=load_gt(), res=load_res()):
                 gt_turn = gt[i][j]['left_or_right']
                 if gt_turn == 3:
                     gt_turn = 2
- 
+
                 inp = preprocess_monoloco(keypoints, torch.eye(3)).view(-1).tolist()
                 dic_jo[phase]['kps'].append(keypoints)
                 dic_jo[phase]['X'].append(inp)

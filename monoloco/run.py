@@ -87,7 +87,7 @@ def cli():
 
     # Training
     training_parser.add_argument('--joints', help='Json file with input joints', required=True)
-    training_parser.add_argument('--mode', help='mono, stereo', default='mono')
+    training_parser.add_argument('--mode', help='mono, stereo, casr, casr_std', default='mono')
     training_parser.add_argument('--out', help='output_path, e.g., data/outputs/test.pkl')
     training_parser.add_argument('-e', '--epochs', type=int, help='number of epochs to train for', default=500)
     training_parser.add_argument('--bs', type=int, default=512, help='input batch size')
@@ -99,9 +99,6 @@ def cli():
     training_parser.add_argument('--hidden_size', type=int, help='Number of hidden units in the model', default=1024)
     training_parser.add_argument('--n_stage', type=int, help='Number of stages in the model', default=3)
     training_parser.add_argument('--hyp', help='run hyperparameters tuning', action='store_true')
-    training_parser.add_argument('--casr', help='run casr training', action='store_true')
-    training_parser.add_argument('--std', help='run casr training with only standard gestures',
-                                 action='store_true')
     training_parser.add_argument('--multiplier', type=int, help='Size of the grid of hyp search', default=1)
     training_parser.add_argument('--r_seed', type=int, help='specify the seed for training and hyp tuning', default=1)
     training_parser.add_argument('--print_loss', help='print training and validation losses', action='store_true')
@@ -169,22 +166,11 @@ def main():
     elif args.command == 'train':
         from .train import HypTuning
         if args.hyp:
-            if args.casr:
-                from .train import HypTuningCasr
-                hyp_tuning_casr = HypTuningCasr(joints=args.joints, epochs=args.epochs,
-                                       monocular=args.monocular, dropout=args.dropout,
-                                       multiplier=args.multiplier, r_seed=args.r_seed)
-                hyp_tuning_casr.train(args)
-            else:
-                hyp_tuning = HypTuning(joints=args.joints, epochs=args.epochs,
-                                       monocular=args.monocular, dropout=args.dropout,
-                                       multiplier=args.multiplier, r_seed=args.r_seed)
-                hyp_tuning.train(args)
-        elif args.casr:
-            from .train import CASRTrainer
-            training = CASRTrainer(args)
-            _ = training.train()
-            _ = training.evaluate()
+            hyp_tuning = HypTuning(joints=args.joints, epochs=args.epochs,
+                                    monocular=args.monocular, dropout=args.dropout,
+                                    multiplier=args.multiplier, r_seed=args.r_seed,
+                                    mode=args.mode)
+            hyp_tuning.train(args)
         else:
             from .train import Trainer
             training = Trainer(args)

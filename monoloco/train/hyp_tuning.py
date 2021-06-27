@@ -15,7 +15,8 @@ from .trainer import Trainer
 
 class HypTuning:
 
-    def __init__(self, joints, epochs, monocular, dropout, multiplier=1, r_seed=1):
+    def __init__(self, joints, epochs, monocular,
+                 dropout, multiplier=1, r_seed=1, mode=None):
         """
         Initialize directories, load the data and parameters for the training
         """
@@ -33,6 +34,9 @@ class HypTuning:
             os.makedirs(dir_logs)
 
         name_out = 'hyp-monoloco-' if monocular else 'hyp-ms-'
+        if mode:
+            name_out = ('hyp-casr-' if mode == 'casr' else
+                        'hyp-casr_std-' if mode == 'casr_std' else name_out)
 
         self.path_log = os.path.join(dir_logs, name_out)
         self.path_model = os.path.join(dir_out, name_out)
@@ -120,7 +124,8 @@ class HypTuning:
         print()
         self.logger.info("Accuracy in each cluster:")
 
-        for key in ('10', '20', '30', '>30', 'all'):
-            self.logger.info("Val: error in cluster {} = {} ".format(key, dic_err_best['val'][key]['d']))
+        if args.mode in ['mono', 'stereo']:
+            for key in ('10', '20', '30', '>30', 'all'):
+                self.logger.info("Val: error in cluster {} = {} ".format(key, dic_err_best['val'][key]['d']))
         self.logger.info("Final accuracy Val: {:.2f}".format(dic_best['acc_val']))
         self.logger.info("\nSaved the model: {}".format(self.path_model))

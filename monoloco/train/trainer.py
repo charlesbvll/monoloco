@@ -41,8 +41,8 @@ class Trainer:
     val_task = 'd'
     lambdas = (1, 1, 1, 1, 1, 1, 1, 1)
     clusters = ['10', '20', '30', '40']
-    input_size = dict(mono=34, stereo=68)
-    output_size = dict(mono=9, stereo=10)
+    input_size = dict(mono=34, stereo=68, casr=34, casr_std=34)
+    output_size = dict(mono=9, stereo=10, casr=4, casr_std=3)
     dir_figures = os.path.join('figures', 'losses')
 
     def __init__(self, args):
@@ -63,14 +63,21 @@ class Trainer:
         self.n_stage = args.n_stage
         self.r_seed = args.r_seed
         self.auto_tune_mtl = args.auto_tune_mtl
+        self.is_casr = self.mode in ['casr', 'casr_std']
 
+        if self.is_casr:
+            self.tasks = ('cyclist',)
+            self.val_task = 'cyclist'
+            self.lambdas = (1,)
         # Select path out
         if args.out:
             self.path_out = args.out  # full path without extension
             dir_out, _ = os.path.split(self.path_out)
         else:
             dir_out = os.path.join('data', 'outputs')
-            name = 'monoloco_pp' if self.mode == 'mono' else 'monstereo'
+            name = ('monoloco_pp' if self.mode == 'mono' else
+                    'monstereo' if self.mode == 'stereo' else
+                    'casr' if self.mode == 'casr' else 'casr_std')
             now = datetime.datetime.now()
             now_time = now.strftime("%Y%m%d-%H%M")[2:]
             name_out = name + '-' + now_time + '.pkl'
@@ -224,18 +231,20 @@ class Trainer:
 
                 # Forward pass
                 outputs = self.model(inputs)
-                self.compute_stats(outputs, labels, dic_err['val'], size_eval, clst='all')
+                if not self.is_casr:
+                    self.compute_stats(outputs, labels, dic_err['val'], size_eval, clst='all')
 
-            self.cout_stats(dic_err['val'], size_eval, clst='all')
-            # Evaluate performances on different clusters and save statistics
-            for clst in self.clusters:
-                inputs, labels, size_eval = dataset.get_cluster_annotations(clst)
-                inputs, labels = inputs.to(self.device), labels.to(self.device)
+            if not self.is_casr:
+                self.cout_stats(dic_err['val'], size_eval, clst='all')
+                # Evaluate performances on different clusters and save statistics
+                for clst in self.clusters:
+                    inputs, labels, size_eval = dataset.get_cluster_annotations(clst)
+                    inputs, labels = inputs.to(self.device), labels.to(self.device)
 
-                # Forward pass on each cluster
-                outputs = self.model(inputs)
-                self.compute_stats(outputs, labels, dic_err['val'], size_eval, clst=clst)
-                self.cout_stats(dic_err['val'], size_eval, clst=clst)
+                    # Forward pass on each cluster
+                    outputs = self.model(inputs)
+                    self.compute_stats(outputs, labels, dic_err['val'], size_eval, clst=clst)
+                    self.cout_stats(dic_err['val'], size_eval, clst=clst)
 
         # Save the model and the results
         if not (self.no_save or load):
@@ -274,7 +283,7 @@ class Trainer:
         if self.mode == 'mono':
             dic_err[clst]['aux'] = 0
             dic_err['sigmas'].append(0)
-        else:
+        elif not self.is_casr:
             acc_aux = get_accuracy(extract_outputs(outputs)['aux'], extract_labels(labels)['aux'])
             dic_err[clst]['aux'] += acc_aux * rel_frac
 

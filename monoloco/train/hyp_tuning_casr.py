@@ -66,7 +66,6 @@ class HypTuningCasr:
 
         best_acc_val = 20
         dic_best = {}
-        dic_err_best = {}
         start = time.time()
         cnt = 0
         for idx, lr in enumerate(self.lr_list):

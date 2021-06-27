@@ -63,7 +63,8 @@ def cli():
     predict_parser.add_argument('--n_dropout', type=int, help='Epistemic uncertainty evaluation', default=0)
     predict_parser.add_argument('--dropout', type=float, help='dropout parameter', default=0.2)
     predict_parser.add_argument('--show_all', help='only predict ground-truth matches or all', action='store_true')
-    predict_parser.add_argument('--casr_std', help='run casr training', action='store_true')
+    predict_parser.add_argument('--casr', help='predict casr', action='store_true')
+    predict_parser.add_argument('--casr_std', help='predict casr with only standard gestures', action='store_true')
     predict_parser.add_argument('--webcam', help='monstereo streaming', action='store_true')
     predict_parser.add_argument('--camera', help='device to use for webcam streaming', type=int, default=0)
     predict_parser.add_argument('--focal', help='focal length in mm for a sensor size of 7.2x5.4 mm. (nuScenes)',

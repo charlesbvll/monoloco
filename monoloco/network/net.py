@@ -100,8 +100,9 @@ class Loco:
             self.model = model
         self.model.eval()  # Default is train
         self.model.to(self.device)
-        self.turning_model.eval()  # Default is train
-        self.turning_model.to(self.device)
+        if casr:
+            self.turning_model.eval()  # Default is train
+            self.turning_model.to(self.device)
 
     def forward(self, keypoints, kk, keypoints_r=None):
         """

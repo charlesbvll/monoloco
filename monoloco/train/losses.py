@@ -88,7 +88,7 @@ class CompositeLoss(torch.nn.Module):
         self.tasks = tasks
         self.multi_loss_tr = {task: (LaplacianLoss() if task == 'd'
                                      else (nn.BCEWithLogitsLoss() if task in ('aux', )
-                                           else (nn.CrossEntropyLoss() if task == 'cyclist' 
+                                           else (nn.CrossEntropyLoss() if task == 'cyclist'
                                            else nn.L1Loss()))) for task in tasks}
 
         self.multi_loss_val = {}

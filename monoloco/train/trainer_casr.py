@@ -18,7 +18,6 @@ from itertools import chain
 
 import matplotlib.pyplot as plt
 import torch
-import torch.nn as nn
 from torch.utils.data import DataLoader
 from torch.optim import lr_scheduler
 
@@ -38,8 +37,8 @@ class CASRTrainer:
     val_task = 'cyclist'
     lambdas = (1,)
     #clusters = ['10', '20', '30', '40']
-    input_size = 34 
-    output_size = 4 
+    input_size = 34
+    output_size = 4
     dir_figures = os.path.join('figures', 'losses')
 
     def __init__(self, args):
@@ -215,7 +214,7 @@ class CASRTrainer:
                     sys.exit()
 
                 # Forward pass
-                outputs = self.model(inputs)
+                #outputs = self.model(inputs)
                 #self.compute_stats(outputs, labels, dic_err['val'], size_eval, clst='all')
 
             # self.cout_stats(dic_err['val'], size_eval, clst='all')

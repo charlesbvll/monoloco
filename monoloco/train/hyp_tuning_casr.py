@@ -98,7 +98,6 @@ class HypTuningCasr:
                 dic_best['random_seed'] = self.r_seed
                 # dic_best['acc_test'] = dic_err['test']['all']['mean']
 
-                dic_err_best = dic_err
                 best_acc_val = acc_val
                 model_best = model
 

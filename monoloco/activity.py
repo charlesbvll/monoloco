@@ -112,9 +112,6 @@ def is_turning(kp):
     is_l_up = kp[y][l_hand] < kp[y][l_shoulder]
     is_r_up = kp[y][r_hand] < kp[y][r_shoulder]
 
-    is_l_down = kp[y][l_hand] > kp[y][l_elbow]
-    is_r_down = kp[y][r_hand] > kp[y][r_elbow]
-
     is_left_risen = is_l_up and l_angle >= 30 and not l_too_close
     is_right_risen = is_r_up and r_angle >= 30 and not r_too_close
 
@@ -128,7 +125,7 @@ def is_turning(kp):
         return 'right'
 
     if is_left_down or is_right_down:
-        return 'stop' 
+        return 'stop'
 
     return None
 
@@ -183,7 +180,7 @@ def is_phoning(kp):
     print("Left hand y = ", kp[y][l_hand])
 
     print("Is left hand up : ", is_l_up)
-    
+ 
     print("Right hand x = ", kp[x][r_hand])
     print("Right hand y = ", kp[y][r_hand])
 
@@ -319,10 +316,6 @@ def show_activities(args, image_t, output_path, annotations, dic_out):
         sizes = [abs(dic_out['uv_heads'][idx][1] - uv_s[1]) / 1.5 for idx, uv_s in
                  enumerate(dic_out['uv_shoulders'])]
         keypoint_painter = KeypointPainter(show_box=False)
-
-        r_h = 'none'
-        if 'raise_hand' in args.activities:
-            r_h = dic_out['raising_hand']
 
         with image_canvas(image_t,
                           output_path + '.front.png',

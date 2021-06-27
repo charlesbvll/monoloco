@@ -234,7 +234,7 @@ def predict(args):
                 if 'raise_hand' in args.activities:
                     dic_out = net.raising_hand(dic_out, keypoints)
                 if 'using_phone' in args.activities:
-                    dic_out = net.using_phone(dic_out, keypoints) 
+                    dic_out = net.using_phone(dic_out, keypoints)
                 if 'is_turning' in args.activities:
                     dic_out = net.turning_forward(dic_out, keypoints)
             else:

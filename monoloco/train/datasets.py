@@ -63,7 +63,10 @@ class KeypointsDataset(Dataset):
         self.version = dic_jo['version']
 
         # Extract annotations divided in clusters
-        # self.dic_clst = dic_jo[phase]['clst']
+        if 'clst' in dic_jo[phase]:
+            self.dic_clst = dic_jo[phase]['clst']
+        else:
+            self.dic_clst = None
 
     def __len__(self):
         """

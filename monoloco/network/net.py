@@ -27,7 +27,8 @@ class Loco:
     LINEAR_SIZE_MONO = 256
     N_SAMPLES = 100
 
-    def __init__(self, model, mode, net=None, device=None, n_dropout=0, p_dropout=0.2, linear_size=1024, casr='nonstd', casr_model=None):
+    def __init__(self, model, mode, net=None, device=None, n_dropout=0,
+                 p_dropout=0.2, linear_size=1024, casr='nonstd', casr_model=None):
 
         # Select networks
         assert mode in ('mono', 'stereo'), "mode not recognized"
@@ -62,12 +63,12 @@ class Loco:
             turning_output_size = 3
             turning_model_path = "/home/beauvill/Repos/monoloco/data/outputs/casr_standard-210613-0005.pkl"
         else:
-            turning_output_size = 4 
+            turning_output_size = 4
             if casr_model:
                 turning_model_path = casr_model
             else:
                 turning_model_path = "/home/beauvill/Repos/monoloco/data/outputs/casr-210615-1128.pkl"
-        
+ 
         print('-'*10 + 'Output size :' + str(turning_output_size) + '-'*10)
 
         if not device:
@@ -92,7 +93,8 @@ class Loco:
                                             linear_size=linear_size, device=self.device)
 
             self.model.load_state_dict(torch.load(model_path, map_location=lambda storage, loc: storage))
-            self.turning_model.load_state_dict(torch.load(turning_model_path, map_location=lambda storage, loc: storage))
+            self.turning_model.load_state_dict(torch.load(turning_model_path, 
+                                                          map_location=lambda storage, loc: storage))
         else:
             self.model = model
         self.model.eval()  # Default is train
@@ -294,7 +296,7 @@ class Loco:
     @staticmethod
     def using_phone(dic_out, keypoints):
         dic_out['using_phone'] = [is_phoning(keypoint) for keypoint in keypoints]
-        return dic_out    
+        return dic_out
 
     @staticmethod
     def turning(dic_out, keypoints):
@@ -316,7 +318,7 @@ class Loco:
             inputs = preprocess_monoloco(keypoints, kk, zero_center=False)
             outputs = self.turning_model(inputs)
             # bi = unnormalize_bi(outputs)
-            dic = {'turning': [o for o in torch.argmax(outputs, axis=len(outputs.shape)-1).tolist()]}
+            dic = {'turning': torch.argmax(outputs, axis=len(outputs.shape)-1).tolist()}
             # dic = {key: el.detach().cpu() for key, el in dic.items()}
             dic_out['turning'] = dic['turning']
 

@@ -96,7 +96,6 @@ class Loco:
 
             self.model.load_state_dict(torch.load(model_path, map_location=lambda storage, loc: storage))
             if casr:
-                print("WTF")
                 self.turning_model.load_state_dict(torch.load(turning_model_path,
                                                               map_location=lambda storage, loc: storage))
         else:

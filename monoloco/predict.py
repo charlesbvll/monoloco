@@ -132,7 +132,7 @@ def factory_from_args(args):
 
     if args.casr_std:
         args.casr = 'std'
-    else:
+    elif args.casr:
         args.casr = 'nonstd'
 
     # Patch for stereo images with batch_size = 2
@@ -161,7 +161,6 @@ def predict(args):
 
     # Load Models
     if args.mode in ('mono', 'stereo'):
-        print(args.casr)
         net = Loco(
             model=dic_models[args.mode],
             mode=args.mode,

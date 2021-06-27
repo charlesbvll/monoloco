@@ -60,13 +60,17 @@ class CASRTrainer:
         self.r_seed = args.r_seed
         self.auto_tune_mtl = args.auto_tune_mtl
 
+        if args.std:
+            self.output_size = 3
+            name = 'casr_standard'
+        else:
+            name = 'casr'
         # Select path out
         if args.out:
             self.path_out = args.out  # full path without extension
             dir_out, _ = os.path.split(self.path_out)
         else:
             dir_out = os.path.join('data', 'outputs')
-            name = 'casr'
             now = datetime.datetime.now()
             now_time = now.strftime("%Y%m%d-%H%M")[2:]
             name_out = name + '-' + now_time + '.pkl'

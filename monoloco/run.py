@@ -100,7 +100,8 @@ def cli():
     training_parser.add_argument('--n_stage', type=int, help='Number of stages in the model', default=3)
     training_parser.add_argument('--hyp', help='run hyperparameters tuning', action='store_true')
     training_parser.add_argument('--casr', help='run casr training', action='store_true')
-    training_parser.add_argument('--casr_std', help='run casr training', action='store_true')
+    training_parser.add_argument('--std', help='run casr training with only standard gestures',
+                                 action='store_true')
     training_parser.add_argument('--multiplier', type=int, help='Size of the grid of hyp search', default=1)
     training_parser.add_argument('--r_seed', type=int, help='specify the seed for training and hyp tuning', default=1)
     training_parser.add_argument('--print_loss', help='print training and validation losses', action='store_true')
@@ -182,11 +183,6 @@ def main():
         elif args.casr:
             from .train import CASRTrainer
             training = CASRTrainer(args)
-            _ = training.train()
-            _ = training.evaluate()
-        elif args.casr_std:
-            from .train import CASRTrainerStandard
-            training = CASRTrainerStandard(args)
             _ = training.train()
             _ = training.evaluate()
         else:

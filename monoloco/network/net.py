@@ -69,8 +69,6 @@ class Loco:
             else:
                 turning_model_path = "/home/beauvill/Repos/monoloco/data/outputs/casr-210615-1128.pkl"
 
-        print('-'*10 + 'Output size :' + str(turning_output_size) + '-'*10)
-
         if not device:
             self.device = torch.device('cpu')
         else:

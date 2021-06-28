@@ -353,6 +353,46 @@ python3 -m openpifpaf.predict \
 --json-output <output folder>
 ```
 
+# CASR dataset
+To train monoloco on the CASR dataset, we must first create the joints file by preprocessing the CASR annotations.
+To do this we create the following folder structure :
+
+    data         
+    ├── casr
+            ├── annotations
+            ├── models
+            ├── outputs
+            
+We then run monoloco on the images of the dataset and save the resulting annotations in a folder that we will call `<dir_ann>`.
+Then we can run :
+```sh
+python3 -m monoloco.run prep --dataset casr --dir_ann <dir_ann>
+```
+Which will create a joints file in `data/casr/outputs`. This file can be inputed into the trainer with `--mode casr` to train a model to recognize cyclist intention.
+```sh
+python3 -m monoloco.run train --mode casr --joints data/outputs/<joints_file>
+```
+This command can also be ran with hyperparamter tuning by adding the flag `--hyp`.
+
+To train a model to recognize only standard gestures from CASR, we can run the following commands :
+```sh
+python3 -m monoloco.run prep --dataset casr --casr_std --dir_ann <dir_ann>
+python3 -m monoloco.run train --mode casr_std --joints data/outputs/<joints_file>
+```
+Once we have obtained a trained model, we can predict cyclist intention by using the following command :
+```sh
+python3 -m monoloco.run predict \
+--glob <path_to_images> \
+--casr --activities is_turning \
+--casr_model data/models/<trained_model>
+```
+Or this one for only standard gestures:
+```sh
+python3 -m monoloco.run predict \
+--glob <path_to_images> \
+--casr_std --activities is_turning \
+--casr_model data/models/<trained_model>
+```
 
 # Evaluation
 

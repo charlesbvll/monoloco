@@ -82,6 +82,7 @@ def cli():
                              help='datasets to preprocess: nuscenes, nuscenes_teaser, nuscenes_mini, kitti',
                              default='kitti')
     prep_parser.add_argument('--dir_nuscenes', help='directory of nuscenes devkit', default='data/nuscenes/')
+    prep_parser.add_argument('--casr_std', help='prep casr with only standard gestures', action='store_true')
     prep_parser.add_argument('--iou_min', help='minimum iou to match ground truth', type=float, default=0.3)
     prep_parser.add_argument('--variance', help='new', action='store_true')
     prep_parser.add_argument('--activity', help='new', action='store_true')
@@ -151,11 +152,8 @@ def main():
             prep = PreprocessNuscenes(args.dir_ann, args.dir_nuscenes, args.dataset, args.iou_min)
             prep.run()
         elif 'casr' in args.dataset:
-            from .prep.casr_preprocess import create_dic
-            create_dic(std=False)
-        elif 'casr_std' in args.dataset:
-            from .prep.casr_preprocess import create_dic
-            create_dic(std=True)
+            from .prep import create_dic
+            create_dic(dir_ann=args.dir_ann, std=args.casr_std)
         else:
             from .prep.preprocess_kitti import PreprocessKitti
             prep = PreprocessKitti(args.dir_ann, mode=args.mode, iou_min=args.iou_min)
